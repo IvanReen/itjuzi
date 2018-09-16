@@ -57,3 +57,65 @@ class ItjuziSpider(scrapy.Spider):
 
             if cpy1:
                 item['name'] = cpy1.find(class_='seo-important-title').get_text().strip().split('\t')[0]
+                item['slogan'] = cpy1.find(class_='seo-slogan').get_text()
+                item['info'] = cpy1.find(class_='scope').string if cpy1.find(class_='scope') else None
+
+                # try:
+                #     info = cpy1.find(class_='scope').string
+                # except:
+                #     info = None
+
+                item['home_page'] = cpy1.find(class_='link-line').find_all('a')[-1].get('href')
+                item['tag_list'] = [a.string for a in cpy1.find(class_='tag_list').find_all('a')]
+
+            cpy2 = soup.find(class_='block-inc-info')
+            if cpy2:
+                item['company_info'] = cpy2.find_all(class_='block')[1].find_all('div')[-1].get_text().strip()
+                item['company_fullname'] = cpy2.find(class_='seo-second-title').get_text()
+                item['company_time'] = cpy2.find_all(class_='seo=second-title')[0].get_text()
+                item['company_size'] = cpy2.find_all(class_='seo=second-title')[1].get_text()
+                item['company_stats'] = cpy2.find('span', {'class': 'pull_right'}).get_text()
+
+            cpy3 = soup.find(class_='list-round-v2')
+            if cpy3:
+                tr_list = cpy3.find_all('tr')
+
+                info_list = []
+                for tr in tr_list:
+                    td_list = tr.find_all('td')
+                    if len(td_list) != 4:
+                        break
+                    info = {}
+                    info['Financing_time'] = td_list[0].get_text().strip()
+                    info['Financing_round'] = td_list[1].get_text().strip()
+                    info['Financing_money'] = td_list[2].get_text().strip()
+                    info['Financing_company'] = [a.string.strip() for a in td_list[3].find_all('a')]
+                    info_list.append(info)
+
+                item['financing'] = info_list
+
+            cpy4 = soup.find(class_='team-list')
+            if cpy4:
+                li_list = cpy4.find_all('li')
+
+                info_list = []
+                for li in li_list:
+                    info = {}
+                    info['team_name'] = li.find(class_='per-name').get_text().strip()
+                    info['team_title'] = li.find(class_='per-position').get_text().strip()
+                    info['team_info'] = li.find(class_='per-des').get_text().strip()
+                    info_list.append(info)
+                item['team'] = info_list
+
+            cpy5 = soup.find(class_='product-list')
+            if cpy5:
+                li_list = cpy5.find_all('li')
+                info_list = []
+                for li in li_list:
+                    info = {}
+                    info['product_name'] = li.find(class_='product-name').get_text().strip()
+                    info['product_info'] = li.find(class_='product-des').get_text().strip()
+                    info_list.append(info)
+                item['product'] = info_list
+            item['company_url'] = response.url
+            yield item
